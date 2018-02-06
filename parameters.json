@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastUS"
+    },
+    "artifactsBaseURL": {
+      "value": "null"
+    },
+    "virtualMachineName": {
+      "value": "djwTest"
+    },
+    "virtualMachineSize": {
+      "value": "Standard_D3S_V3"
+    },
+    "adminUsername": {
+      "value": "azureuser"
+    },
+    "adminPassword": {
+      "value": "SuperP@ssw0rd"
+    },
+    "diagnosticsStorageAccountName": {
+      "value": "profiseev62diag958"
+    },
+    "vnetNewOrExisting": {
+      "value": "existing"
+    },
+    "existingvnetRG": {
+      "value": "ProfiseeDC"
+    },
+    "vnetName": {
+      "value": "Profisee-vnet"
+    },
+    "vnetAddressSpace": {
+      "value": "10.0.0.0/24"
+    },
+    "subnet1Name": {
+      "value": "first"
+    },
+    "subnet1AddressSpace": {
+      "value": "10.0.0.0/24"
+    },
+    "publicIpAddressName": {
+      "value": "public"
+    },
+    "publicIpAddressDomainNameLabel": {
+      "value": "pip953812"
+    },
+    "dnsLabelPrefix": {
+      "value": "profisee"
+    },
+    "domainToJoin": {
+      "value": "profisee.local"
+    },
+    "ouPath": {
+      "value": "Profisee.local/Computers"
+    },
+    "domainUserName": {
+      "value": "azureuser"
+    },
+    "domainPassword": {
+      "value": "TestingStuffz1!"
+    }
+  }
+}

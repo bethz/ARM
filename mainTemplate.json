@@ -1,0 +1,387 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "providerTags": {
+            "type": "object",
+            "defaultValue": {
+                "provider": "7275B81F-99BE-43B3-B1D8-38E629A7ECAD"
+            }
+        },
+        "location": {
+            "type": "string"
+        },
+        "artifactsBaseURL": {
+            "type": "string",
+            "metadata": {
+                "description": "The marketplace populated default location of artifacts",
+                "artifactsBaseUrl": ""
+            }
+        },
+        "virtualMachineName": {
+            "type": "string"
+        },
+        "virtualMachineSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "diagnosticsStorageAccountName": {
+            "type": "string"
+        },
+        "vnetNewOrExisting": {
+            "type": "string"
+        },
+        "existingvnetRG": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "vnetAddressSpace": {
+            "type": "string"
+        },
+        "subnet1Name": {
+            "type": "string"
+        },
+        "subnet1AddressSpace": {
+            "type": "string"
+        },
+        "publicIpAddressName": {
+            "type": "string"
+        },
+        "publicIpAddressDomainNameLabel": {
+            "type": "string"
+          },    
+        "dnsLabelPrefix": {
+            "type": "string"
+        },
+        "domainToJoin": {
+            "type": "string"
+        },
+        "ouPath": {
+            "type": "string"
+        },
+        "domainUserName": {
+            "type": "string"
+        },
+        "domainPassword": {
+            "type": "securestring"
+        }
+
+    },
+    "variables": {
+        "apiVersions": {
+            "resources": {
+                "deployments": "2016-09-01"
+            },
+            "storage": {
+                "storageAccounts": "2017-06-01"
+            },
+            "network": {
+                "virtualNetworks": "2017-09-01",
+                "networkInterfaces": "2017-09-01",
+                "loadBalancers": "2017-09-01",
+                "publicIPAddresses": "2017-09-01",
+                "networkSecurityGroups": "2017-09-01"
+            },
+            "compute": {
+                "availabilitySets": "2017-03-30",
+                "virtualMachines": "2017-03-30",
+                "virtualMachineExtensions": "2017-03-30"
+            }
+        },
+        "sql": {
+            "portNumber": "1433",
+            "autopatchingDayOfWeek": "Sunday",
+            "autopatchingStartHour": "2",
+            "autopatchingWindowDuration": "60",            
+            "storageWorkloadType": "General",
+            "storageStartingDeviceID": "2",
+            "deploymentToken": "41652",
+            "storageDisksCount": "1",
+            "storageDisksConfigurationType": "New",
+            "connectivityType": "Private",
+            "rServicesEnabled": "false"
+        },
+        "domainJoinOptions": "3",
+        "diagnosticsStorageAccountType": "Storage",
+        "baseURL": "[concat(parameters('artifactsBaseURL'), '/')]",
+        "dbMoveScript": "runme.ps1",
+        "nicName": "[concat(parameters('virtualmachineName'), '-nic')]",
+        "existingVnetID": "[concat(parameters('existingVnetRG'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "vnetId": "[resourceId('ProfiseeDC', 'Microsoft.Network/virtualNetworks','profisee-vnet')]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'default')]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "[variables('apiVersions').compute.virtualMachines]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticsStorageAccountName'))]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "profisee",
+                        "offer": "maestro-base-server-v6-preview",
+                        "sku": "maestrobaseserverv6",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[concat(parameters('virtualMachinename'),'datavol1')]",
+                            "createOption": "Empty",
+                            "caching": "ReadOnly",
+                            "managedDisk": {
+                                "storageAccountType": "Premium_LRS"
+                            },
+                            "diskSizeGB": 1023
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticsStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+                    }
+                }
+            },
+            "plan": {
+                "name": "maestrobaseserverv6",
+                "publisher": "profisee",
+                "product": "maestro-base-server-v6-preview"
+            }
+        },
+        {
+            "name": "[concat(parameters('dnsLabelPrefix'),'/joindomain')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",            
+            "apiVersion": "[variables('apiVersions').compute.virtualMachineExtensions]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualmachineName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "Name": "[parameters('domainToJoin')]",
+                    "OUPath": "[parameters('ouPath')]",
+                    "User": "[concat(parameters('domainToJoin'), '\\', parameters('domainUsername'))]",
+                    "Restart": "true",
+                    "Options": "[variables('domainJoinOptions')]"
+                },
+                "protectedSettings": {
+                    "Password": "[parameters('domainPassword')]"
+                }
+            }
+        },
+        {        
+            "apiVersion": "[variables('apiversions').compute.virtualMachineExtensions]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('virtualMachineName'),'/SetupProfisee')]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.9",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "#DBmovescript"
+                ],
+                    "commandToExecute": "[concat('powershell.exe -File ', './runme.ps1', ' ', parameters('#drive'), ' ', parameters('DB'))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiversions').compute.virtualMachines]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
+            "properties": {
+                "type": "SqlIaaSAgent",
+                "publisher": "Microsoft.SqlServer.Management",
+                "typeHandlerVersion": "1.2",
+                "autoUpgradeMinorVersion": "true",
+                "settings": {
+                    "AutoTelemetrySettings": {
+                        "Region": "[parameters('location')]"
+                    },
+                    "AutoPatchingSettings": {
+                        "PatchCategory": "WindowsMandatoryUpdates",
+                        "Enable": true,
+                        "DayOfWeek": "[variables('sql').autopatchingDayOfWeek]",
+                        "MaintenanceWindowStartingHour": "[variables('sql').autopatchingStartHour]",
+                        "MaintenanceWindowDuration": "[variables('sql').autopatchingWindowDuration]"
+                    },
+                    "KeyVaultCredentialSettings": {
+                        "Enable": false,
+                        "CredentialName": ""
+                    },
+                    "ServerConfigurationsManagementSettings": {
+                        "SQLConnectivityUpdateSettings": {
+                            "ConnectivityType": "[variables('sql').connectivityType]",
+                            "Port": "[variables('sql').portNumber]"
+                        },
+                        "SQLWorkloadTypeUpdateSettings": {
+                            "SQLWorkloadType": "[variables('sql').storageWorkloadType]"
+                        },
+                        "SQLStorageUpdateSettings": {
+                            "DiskCount": "[variables('sql').storageDisksCount]",
+                            "NumberOfColumns": "[variables('sql').storageDisksCount]",
+                            "StartingDeviceID": "[variables('sql').storageStartingDeviceID]",
+                            "DiskConfigurationType": "[variables('sql').storageDisksConfigurationType]"
+                        },
+                        "AdditionalFeaturesServerConfigurations": {
+                            "IsRServicesEnabled": "[variables('sql').rServicesEnabled]"
+                        }
+                    }
+                },
+                "protectedSettings": {}
+            }
+        },
+        {
+            "name": "[parameters('diagnosticsStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('apiversions').storage.storageAccounts]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "kind": "[variables('diagnosticsStorageAccountType')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+            }
+        },
+
+        {
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "[variables('apiVersions').network.networkInterfaces]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[variables('existingvnetID')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('ProfiseeDC', 'Microsoft.Network/networkSecurityGroups', 'Profisee-nsg')]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('vnetNewOrExisting'),'new')]",
+            "apiVersion": "[variables('apiVersions').network.virtualNetworks]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetName')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet1AddressSpace')]"
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "name": "[parameters('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "[variables('apiVersions').network.publicIPAddresses]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerTags').provider)]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 30,
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('publicIpAddressDomainNameLabel')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}

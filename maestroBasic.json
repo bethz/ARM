@@ -1,0 +1,21 @@
+"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "0.5.0.0",
+  "parameters": {
+    "parameters": {
+        "Machine":{"type":"object"}
+        
+    },
+    "Machine" :{
+        "value:":{
+            "AzureRegion": {
+                "value": "eastUS"
+              },        
+            "Name": {
+              "value": "ProfPOC"
+            },
+        }
+        "metadata": {
+                "description": "Machine Attributes for Basic Proficee instance."
+        }
+    }
+}
