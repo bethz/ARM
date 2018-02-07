@@ -2,12 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "value": "eastus2"
-        },
-        "virtualMachineName": {
-            "value": "ProfBasic"
-        },
         "virtualMachineSize": {
             "value": "Standard_D2_v2"
         },
@@ -24,7 +18,7 @@
             "value": "ProfBasic-nsg"
         },
         "adminPassword": {
-            "value": null
+            "value": "nulliA6SoI0jQYDbs6GyPggh"
         },
         "storageAccountName": {
             "value": "testwindisks844"
@@ -49,18 +43,6 @@
         },
         "publicIpAddressSku": {
             "value": "Basic"
-        },
-        "autoShutdownStatus": {
-            "value": "Enabled"
-        },
-        "autoShutdownTime": {
-            "value": "23:00"
-        },
-        "autoShutdownTimeZone": {
-            "value": "Eastern Standard Time"
-        },
-        "autoShutdownNotificationStatus": {
-            "value": "Disabled"
         }
     }
 }

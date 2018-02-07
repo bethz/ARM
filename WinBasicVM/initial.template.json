@@ -2,12 +2,14 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "Mch" : {
-        "type":"object",
-        "defaultValue": {
-            "name" : "ProfBasic",
-            "location" : "eastus2"
-        }
+        "Mch" : {"type":"object"
+        "defaultvalue": {
+            "name" : {
+                "type":"string"
+            },
+            "location" : {
+                "type": "string"
+            }
         },
         "virtualMachineSize": {
             "type": "string"
@@ -50,6 +52,18 @@
         },
         "publicIpAddressSku": {
             "type": "string"
+        },
+        "autoShutdownStatus": {
+            "type": "string"
+        },
+        "autoShutdownTime": {
+            "type": "string"
+        },
+        "autoShutdownTimeZone": {
+            "type": "string"
+        },
+        "autoShutdownNotificationStatus": {
+            "type": "string"
         }
     },
     "variables": {
@@ -57,7 +71,7 @@
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
     },
     "resources": [
-            {
+        {
             "name": "[parameters('Mch').name]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2017-03-30",
@@ -86,7 +100,7 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "createOption": "FromImage",
+                        "createOption": "fromImage",
                         "vhd": {
                             "uri": "[concat(concat(reference(resourceId('TestWin', 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('Mch').name, '20180205163421.vhd')]"
                         },
@@ -103,6 +117,28 @@
                 },
                 "licenseType": "Windows_Client"
             }
+        },
+        {
+            "name": "[concat('shutdown-computevm-', parameters('Mch').name)]",
+            "type": "Microsoft.DevTestLab/schedules",
+            "apiVersion": "2017-04-26-preview",
+            "location": "[parameters('Mch').location]",
+            "properties": {
+                "status": "[parameters('autoShutdownStatus')]",
+                "taskType": "ComputeVmShutdownTask",
+                "dailyRecurrence": {
+                    "time": "[parameters('autoShutdownTime')]"
+                },
+                "timeZoneId": "[parameters('autoShutdownTimeZone')]",
+                "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('Mch').name)]",
+                "notificationSettings": {
+                    "status": "[parameters('autoShutdownNotificationStatus')]",
+                    "timeInMinutes": "30"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('Mch').name)]"
+            ]
         },
         {
             "name": "[parameters('storageAccountName')]",
@@ -187,7 +223,7 @@
                         "name": "default-allow-rdp",
                         "properties": {
                             "priority": 1000,
-                            "protocol": "Tcp",
+                            "protocol": "TCP",
                             "access": "Allow",
                             "direction": "Inbound",
                             "sourceAddressPrefix": "*",

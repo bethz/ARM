@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "crap"
+exit
 set -euo pipefail
 IFS=$'\n\t'
 
