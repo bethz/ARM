@@ -1,0 +1,65 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "not very descriptive"
+            }
+        }
+        
+    },
+    "variables": {
+        "apis": {
+            "storage": "2017-06-01",
+            "network": "2017-04-01",
+            "virtualMachine": "2017-03-30",
+            "resources": "2016-09-01"
+        }
+    },
+    "faultDomainRegion": {
+        "eastus": "3",
+        "eastus2": "3",
+        "westus": "3",
+        "westus2": "2",
+        "centralus": "3",
+        "northcentralus": "3",
+        "southcentralus": "3",
+        "westcentralus": "2",
+        "canadacentral": "2",
+        "canadaeast": "2",
+        "northeurope": "3",
+        "westeurope": "3",
+        "uksouth": "2",
+        "ukwest": "2",
+        "eastasia": "2",
+        "southeastasia": "2",
+        "japaneast": "2",
+        "japanwest": "2",
+        "southindia": "2",
+        "centralindia": "2",
+        "australiaeast": "2",
+        "australiasoutheast": "2",
+        "brazilsouth": "2",
+        "westindia": "2",
+        "koreacentral": "2",
+        "koreasouth": "2"
+        
+    },
+    "resources": [
+        {
+            "comments": "Storage account for Functions Queues",
+            "apiVersion": "[variables('apis').storage]",
+            "type": "Storage",
+            "sku": {
+                "name": ""
+            },
+            "name": "",
+            "location": "[parameters('location')]"
+        }        
+    ],
+    "outputs": {
+        
+    }
+}

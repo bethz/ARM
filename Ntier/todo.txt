@@ -1,0 +1,4 @@
+modularize to each resource, with ui for number and copyIndex for each, (x webservers, x sql servers, x processing servers with all other extensions processing some # disks and db moves)
+
+to-do migrate single server to multi server (prereqs for networking and domain required, same as above with different custom scripts)
+

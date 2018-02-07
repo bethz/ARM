@@ -1,0 +1,510 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "artifactsBaseURL": {
+      "type": "string",
+      "metadata": {
+        "description": "this is the package handler base URL value",
+        "artifactsBaseURL": ""
+      }
+    },
+    "workloadSize": {
+      "type": "object",
+      "allowedValues": [
+        "Test",
+        "Small",
+        "Medium",
+        "Large"
+      ]
+    },
+    "nsgName": {
+      "type": "string",
+      "defaultValue": "nsg-mgmt",
+      "metadata": {
+        "description": "Network Security Group Name"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-FW",
+      "metadata": {
+        "description": "Virtual Network Name"
+      }
+    },
+    "virtualNetworkNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "allowedValues": [
+                "new",
+                "existing"
+            ],
+            "metadata": {
+                "description": "Select whether to use a new or existing Virtual Network, specified by virtualNetworkName"
+            }
+    },
+    "existingVnetRG": {
+      "type": "string"
+    },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "CIDR for Virtual Network"
+      }
+    },
+    "MgmtSubnetName": {
+      "type": "string",
+      "defaultValue": "Mgmt",
+      "metadata": {
+        "description": "Subnet for Management Network"
+      }
+    },
+    "mgmtSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/24",
+      "metadata": {
+        "description": "CIDR for Management Network"
+      }
+    },
+    "untrustedSubnetName": {
+      "type": "string",
+      "defaultValue": "Untrust",
+      "metadata": {
+        "description": "Subnet for Untrusted Network"
+      }
+    },
+    "untrustedSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "CIDR for Untrusted Network"
+      }
+    },
+    "trustedSubnetName": {
+      "type": "string",
+      "defaultValue": "Trust",
+      "metadata": {
+        "description": "Subnet for Trusted Network"
+      }
+    },
+    "trustedSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "CIDR for Trusted Network"
+      }
+    },
+    "appGatewayName": {
+      "type": "string",
+      "defaultValue": "myAppGw",
+      "metadata": {
+        "description": "App Gateway name - used to identify resource in Azure portal"
+      }
+    },
+    "appGatewayDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "App Gateway Public IP DNS Name. Must be globally unique."
+      }
+    },
+    "appGatewaySubnetName": {
+      "type": "string",
+      "defaultValue": "AppGWSubnet",
+      "metadata": {
+        "description": "Subnet for App Gateway"
+      }
+    },
+    "appGatewaySubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.3.0/24",
+      "metadata": {
+        "description": "CIDR for App Gateway"
+      }
+    },
+    "internalLoadBalancerName": {
+      "type": "string",
+      "defaultValue": "myPrivateLB",
+      "metadata": {
+        "description": "Internal Load Balancer name - used to identify resource in Azure portal"
+      }
+    },
+    "backendSubnetName": {
+      "type": "string",
+      "defaultValue": "backendSubnet",
+      "metadata": {
+        "description": "Subnet for Backend WWW Network"
+      }
+    },
+    "backendSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.4.0/24",
+      "metadata": {
+        "description": "CIDR for Backend WWW Network"
+      }
+    },
+    "backendVmSize": {
+       "type": "string",
+       "allowedValues": [
+          "Standard_A1",
+          "Standard_D1",
+          "Standard_D1_v2"
+       ],
+       "metadata": {
+          "description": "Azure VM size for backend VMs.  Not all sizes are available in all regions."
+       },
+       "defaultValue": "Standard_D1"
+    },
+    "firewallModel": {
+       "type": "string",
+       "defaultValue": "byol",
+       "allowedValues": [
+          "byol",
+          "bundle1",
+          "bundle2"
+       ],
+       "metadata": {
+           "description": "byol = Bring Your Own License; bundle1 = Bundle 1 PAYG (Hourly); bundle2 = Bundle 2 PAYG (Hourly)"
+       }
+    },
+    "firewallVmName": {
+       "type": "string",
+       "metadata": {
+          "description": "Name prefix of VM-Series VM in the Azure portal"
+       },  
+       "defaultValue": "VM-Series"
+    },
+    "firewallVmSize": {
+       "type": "string",
+       "allowedValues": [
+          "Standard_D3_v2",
+          "Standard_D4_v2",
+          "Standard_D5_v2",
+          "Standard_D14_v2"
+       ],
+       "metadata": {
+          "description": "Azure VM size for VM-Series"
+       },
+       "defaultValue": "Standard_D3"
+    },
+    "MgmtPublicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name prefix of public IP resource for Management interface of VM-Series firewall.  Name must be globally unique."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account created to store the VM's disks.  Storage account name must be globally unique."
+      } 
+    },
+    "storageAccountNewOrExisting" : {
+       "type": "string",
+       "defaultValue" : "new",
+       "allowedValues" : [
+          "new",
+          "existing"
+       ],
+       "metadata": {
+          "Description": "Select new or existing Storage Account, specified by storageAccountName"
+       }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Type of the storage account created"
+      },
+      "defaultValue": "Standard_LRS"
+    },
+    "username": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of the administrator account of VM instances"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of administrator user authentication "
+      },
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "defaultValue": "password"
+    },
+    "password": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password for the administrator account of all VM instances. Must be specified if Authentication Type is 'password'."
+      }
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SSH RSA public key file as a string. Must be specified if Authentication Type is 'sshPublicKey'."
+      }
+    }
+  },
+  "variables": {
+    "tshirtSize": "[variables(concat('tshirtSize', parameters('workloadSize')))]",
+    "tshirtSizeSmall": {
+      "vmSize": "Standard_A1",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-2disk-resources.json')]",
+      "vmCount": 2,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 1,
+        "pool": "db",
+        "map": [
+          0,
+          0
+        ],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeMedium": {
+      "vmSize": "Standard_A3",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-8disk-resources.json')]",
+      "vmCount": 2,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [
+          0,
+          1
+        ],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
+      "vmCount": 3,
+      "slaveCount": 2,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [
+          0,
+          1,
+          1
+        ],
+        "jumpbox": 0
+      }
+    },
+    "osSettings": {
+      "scripts": [
+        "[concat(variables('templateBaseUrl'), 'install_postgresql.sh')]",
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      ]
+    },
+    "imageReference": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "14.04.2-LTS",
+      "version": "latest"
+    },
+    "networkSettings": {
+      "vnetName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnets": {
+        "dmz": {
+          "name": "dmz",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "data": {
+          "name": "data",
+          "prefix": "10.0.1.0/24",
+          "vnet": "[parameters('vnetName')]"
+        }
+      }
+    },
+    "availabilitySetSettings": {
+      "name": "webServerAS",
+      "fdCount": 2,
+      "udCount": 2
+    },
+    "apiVersions": {
+      "resources": {
+        "deployments": "2016-09-01"
+      },
+      "storage": {
+        "storageAccounts": "2017-06-01"
+      },
+      "network": {
+        "virtualNetworks": "2017-09-01",
+        "networkInterfaces": "2017-09-01",
+        "loadBalancers": "2017-09-01",
+        "publicIPAddresses": "2017-09-01",
+        "networkSecurityGroups": "2017-09-01"
+      },
+      "compute": {
+        "availabilitySets": "2017-03-30",
+        "virtualMachines": "2017-03-30",
+        "virtualMachineExtensions": "2017-03-30"
+      }
+    },
+      "templateBaseURL": "[concat(parameters('artifactsBaseURL'), '/nestedResources/')]"
+    },
+    "resources": [
+      {
+        "apiVersion": "[variables('apiVersions').resources.deployments]",
+        "name": "networkScaffolding",
+        "type": "Microsoft.Resources/deployments",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[concat(variables('templateBaseURL'), '/nestedResources/vm.json')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vnetResourceGroup": {
+              "value": "[parameters('vnetResourceGroup')]"
+            },
+            "vnetResourceGroup": {
+              "value": "[parameters('vnetResourceGroup')]"
+            },
+            "vnetNewOrExisting": {
+              "value": "[parameters('vnetNewOrExisting')]"
+            },
+            "vnetNewOrExisting": {
+              "value": "[parameters('vnetNewOrExisting')]"
+            },
+            "vnetAddressSpace": {
+              "value": "[parameters('vnetAddressSpace')]"
+            },
+            "vnetAddressSpace": {
+              "value": "[parameters('vnetAddressSpace')]"
+            },
+            "vnetName": {
+              "value": "[parameters('vnetName')]"
+            },
+            "vnetName": {
+              "value": "[parameters('vnetName')]"
+            },
+            "AddressSpace": {
+              "value": "[parameters('AddressSpace')]"
+            },
+            "AddressSpace": {
+              "value": "[parameters('AddressSpace')]"
+            },
+            "publicIpAddressRGroup": {
+              "value": "[parameters('publicIpAddressRGroup')]"
+            },
+            "publicIpAddressRGroup": {
+              "value": "[parameters('publicIpAddressRGroup')]"
+            },
+            "publicIpAddressName": {
+              "value": "[parameters('publicIpAddressName')]"
+            },
+            "publicIpAddressName": {
+              "value": "[parameters('publicIpAddressName')]"
+            },
+            "publicIpAddressDomainNameLabel": {
+              "value": "[parameters('publicIpAddressDomainNameLabel')]"
+            },
+            "publicIpAddressDomainNameLabel": {
+              "value": "[parameters('publicIpAddressDomainNameLabel')]"
+            },
+            "publicIpAddressNewOrExistingOrNone": {
+              "value": "[parameters('publicIpAddressNewOrExistingOrNone')]"
+            },
+            "publicIpAddressNewOrExistingOrNone": {
+              "value": "[parameters('publicIpAddressNewOrExistingOrNone')]"
+            },
+            "storageContainerName": {
+              "value": "[parameters('storageContainerName')]"
+            }
+          }
+        }
+      },
+      {
+        "apiVersion": "[variables('apiVersions').resources.deployments]",
+        "name": "webServers",
+        "type": "Microsoft.Resources/deployments",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[concat(variables('templateBaseURL'), '/nestedResources/vm.json')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vnetResourceGroup": {
+              "value": "[parameters('vnetResourceGroup')]"
+            },
+            "vnetResourceGroup": {
+              "value": "[parameters('vnetResourceGroup')]"
+            },
+            "vnetNewOrExisting": {
+              "value": "[parameters('vnetNewOrExisting')]"
+            },
+            "vnetNewOrExisting": {
+              "value": "[parameters('vnetNewOrExisting')]"
+            },
+            "vnetAddressSpace": {
+              "value": "[parameters('vnetAddressSpace')]"
+            },
+            "vnetAddressSpace": {
+              "value": "[parameters('vnetAddressSpace')]"
+            },
+            "vnetName": {
+              "value": "[parameters('vnetName')]"
+            },
+            "vnetName": {
+              "value": "[parameters('vnetName')]"
+            },
+            "AddressSpace": {
+              "value": "[parameters('AddressSpace')]"
+            },
+            "AddressSpace": {
+              "value": "[parameters('AddressSpace')]"
+            },
+            "publicIpAddressRGroup": {
+              "value": "[parameters('publicIpAddressRGroup')]"
+            },
+            "publicIpAddressRGroup": {
+              "value": "[parameters('publicIpAddressRGroup')]"
+            },
+            "publicIpAddressName": {
+              "value": "[parameters('publicIpAddressName')]"
+            },
+            "publicIpAddressName": {
+              "value": "[parameters('publicIpAddressName')]"
+            },
+            "publicIpAddressDomainNameLabel": {
+              "value": "[parameters('publicIpAddressDomainNameLabel')]"
+            },
+            "publicIpAddressDomainNameLabel": {
+              "value": "[parameters('publicIpAddressDomainNameLabel')]"
+            },
+            "publicIpAddressNewOrExistingOrNone": {
+              "value": "[parameters('publicIpAddressNewOrExistingOrNone')]"
+            },
+            "publicIpAddressNewOrExistingOrNone": {
+              "value": "[parameters('publicIpAddressNewOrExistingOrNone')]"
+            },
+            "storageContainerName": {
+              "value": "[parameters('storageContainerName')]"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

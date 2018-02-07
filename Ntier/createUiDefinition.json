@@ -1,0 +1,221 @@
+{
+	"handler": "Microsoft.Compute.MultiVm",
+	"version": "0.1.2-preview",
+	"parameters": {
+		"basics": [
+			{
+				"name": "vmName",
+				"type": "Microsoft.Common.TextBox",
+				"label": "Virtual Machine Name",
+				"toolTip": "The name of the VM to create for Profisee Version 6",
+				"constraints": {
+					"required": true,
+					"regex": "^[a-z][a-z0-9]{4,29}$",
+					"validationMessage": "Virtual machine name must be between 5 and 30 characters long, can contain only numbers and lowercase letters, and must start with a letter."
+				}
+			},
+			{
+				"name": "adminUsername",
+				"type": "Microsoft.Compute.UserNameTextBox",
+				"label": "Admin Username",
+				"defaultValue": "azureuser",
+				"toolTip": "windows username for the virtual machine",
+				"constraints": {
+					"required": true,
+					"regex": "^[a-z_][a-z0-9_]{0,30}$"
+				},
+				"osPlatform": "Windows"
+			},
+			{
+				"name": "adminPassword",
+				"type": "Microsoft.Compute.CredentialsCombo",
+				"label": {
+					"password": "Password",
+					"confirmPassword": "Confirm password"
+				},
+				"toolTip": {
+					"password": "Password should be 12 to 72 characters long and should contain at least one capital letter and one digit."
+				},
+				"constraints": {
+					"required": true
+				},
+				"options": {
+					"hideConfirmation": false
+				},
+				"osPlatform": "Windows",
+				"visible": true
+			}
+		],
+		"steps": [
+			{
+				"name": "maestroConfig",
+				"label": "Profisee Maestro",
+				"subLabel": {
+					"preValidation": "Configure Maestro",
+					"postValidation": "Done"
+				},
+				"bladeTitle": "Maestro Settings",
+				"elements": [
+					{
+						"name": "maestroWebAppPool",
+						"type": "Microsoft.Common.TextBox",
+						"label": "Maestro Web App Username",
+						"defaultValue": "maestrowebwpp",
+						"toolTip": "Maestro Web App Pool username",
+						"constraints": {
+							"required": true,
+							"regex": "^[a-z][a-z0-9_]{4,29}$",
+							"validationMessage": "Maestro Web App Pool must be between 5 and 30 characters long, can contain only numbers and lowercase letters, and must start with a letter."
+						}
+					},
+					{
+						"name": "maestroWebAppPoolPassword",
+						"type": "Microsoft.Common.PasswordBox",
+						"label": {
+							"password": "Maestro Web App Password",
+							"confirmPassword": "Confirm Maestro password"
+						},
+						"toolTip": "Maestro admin password",
+						"constraints": {
+							"required": true,
+							"regex": "^[A-Za-z][a-z0-9A-Z!@#$%^&*<>]{11,29}$",
+							"validationMessage": "Password must be between 12 and 30 characters long, can contain only numbers,these special characters !@#$%^&*<> and letters, and must start with a letter."
+						},
+						"options": {
+							"hideConfirmation": false
+						}
+					},
+					{
+						"name": "vmSize",
+						"type": "Microsoft.Compute.SizeSelector",
+						"label": "Maestro VM Size",
+						"toolTip": "Virtual machine size for Maestro Server",
+						"recommendedSizes": [
+							"Standard_D4s_v3"
+						],
+						"constraints": {
+							"allowedSizes": [
+								"Standard_D4s_v3"
+							]
+						},
+						"osPlatform": "Windows",
+						"count": 1
+					},
+					{
+						"name": "maestroVersion",
+						"type": "Microsoft.Common.DropDown",
+						"label": "Maestro Version",
+						"defaultValue": "6.0.2",
+						"toolTip": "Profisee Maestro version that you will be using with this server",
+						"constraints": {
+							"allowedValues": [
+								{
+									"label": "6.0.2",
+									"value": "6.0.2"
+								}
+							]
+						}
+					}
+				]
+			},
+			{
+				"name": "generalConfig",
+				"label": "General Settings",
+				"subLabel": {
+					"preValidation": "Configure General Settings",
+					"postValidation": "Done"
+				},
+				"bladeTitle": "General Settings",
+				"elements": [
+					{
+						"name": "virtualNetworkSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Virtual Network Configuration",
+						"elements": [
+							{
+								"name": "virtualNetwork",
+								"type": "Microsoft.Network.VirtualNetworkCombo",
+								"label": {
+									"virtualNetwork": "Virtual network",
+									"subnets": "Subnets"
+								},
+								"toolTip": {
+									"virtualNetwork": "Maestro server will be deployed into this virtual network.",
+									"subnets": "For a new virtual network, the deployment will create one subnet."
+								},
+								"defaultValue": {
+									"name": "Maestro-vnet",
+									"addressPrefixSize": "/16"
+								},
+								"options": {
+									"hideExisting": false
+								},
+								"constraints": {
+									"minAddressPrefixSize": "/28"
+								},
+								"subnets": {
+									"subnet1": {
+										"label": "Subnet",
+										"defaultValue": {
+											"name": "subnet1",
+											"addressPrefixSize": "/24"
+										},
+										"constraints": {
+											"minAddressPrefixSize": "/28",
+											"minAddressCount": "1",
+											"requireContiguousAddresses": true
+										}
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "publicIpSection",
+						"type": "Microsoft.Common.Section",
+						"label": "Public IP Configuration",
+						"elements": [
+							{
+								"name": "publicIp",
+								"type": "Microsoft.Network.PublicIpAddressCombo",
+								"label": {
+									"publicIpAddress": "Public IP address",
+									"domainNameLabel": "Domain name label"
+								},
+								"toolTip": {
+									"publicIpAddress": "Public IP address resource name for Maestro Server",
+									"domainNameLabel": "Domain name label for the Maestro public IP address resource (e.g. <domainNameLabel>.<region>.cloudapp.azure.com)"
+								},
+								"defaultValue": {
+									"publicIpAddressName": "Maestro-publicip"
+								},
+								"options": {
+									"hideNone": true,
+									"hideDomainNameLabel": false,
+									"hideExisting": false
+								}
+							}
+						]
+					}
+				]
+			}
+		],
+		"outputs": {
+			"location": "[location()]",
+			"vmName": "[basics('vmName')]",
+			"adminUsername": "[basics('adminUsername')]",
+			"adminPassword": "[basics('adminPassword').password]",
+			"maestroVersion": "[steps('maestroConfig').maestroVersion]",
+			"vmSize": "[steps('maestroConfig').vmSize]",
+			"maestroWebAppPool": "[steps('maestroConfig').MaestroWebAppPool]",
+			"maestroWebAppPoolPassword": "[steps('maestroConfig').maestroWebAppPoolPassword]",
+			"vnetName": "[steps('generalConfig').virtualNetworkSection.virtualNetwork.name]",
+			"vnetAddressSpace": "[steps('generalConfig').virtualNetworkSection.virtualNetwork.addressPrefix]",
+			"subnet1Name": "[steps('generalConfig').virtualNetworkSection.virtualNetwork.subnets.subnet1.name]",
+			"subnet1AddressSpace": "[steps('generalConfig').virtualNetworkSection.virtualNetwork.subnets.subnet1.addressPrefix]",
+			"subnet1StartAddress": "[steps('generalConfig').virtualNetworkSection.virtualNetwork.subnets.subnet1.startAddress]",
+			"publicIpAddressName": "[steps('generalConfig').publicIpSection.publicIp.name]",
+			"publicIpAddressDomainNameLabel": "[steps('generalConfig').publicIpSection.publicIp.domainNameLabel]"
+		}
+	}
+}

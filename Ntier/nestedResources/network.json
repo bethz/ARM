@@ -1,0 +1,61 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        
+    },
+    "variables": {
+        "resources": "2016-06-01",
+        "storage": "2017-06-01",
+        "network": "2017-09-01",
+        "compute": "2017-03-01",
+        "webSites": "2016-03-01"
+    },
+    "faultDomainRegion": {
+        "eastus": "3",
+        "eastus2": "3",
+        "westus": "3",
+        "westus2": "2",
+        "centralus": "3",
+        "northcentralus": "3",
+        "southcentralus": "3",
+        "westcentralus": "2",
+        "canadacentral": "2",
+        "canadaeast": "2",
+        "northeurope": "3",
+        "westeurope": "3",
+        "uksouth": "2",
+        "ukwest": "2",
+        "eastasia": "2",
+        "southeastasia": "2",
+        "japaneast": "2",
+        "japanwest": "2",
+        "southindia": "2",
+        "centralindia": "2",
+        "australiaeast": "2",
+        "australiasoutheast": "2",
+        "brazilsouth": "2",
+        "westindia": "2",
+        "koreacentral": "2",
+        "koreasouth": "2"
+
+        
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+              "dnsSettings": {
+                "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+              }
+            }
+        }
+    ],
+    "outputs": {
+
+    }
+}
